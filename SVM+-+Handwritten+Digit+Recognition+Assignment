@@ -1,0 +1,546 @@
+############################ SVM Assignment -- handwritten digit recognition ############################
+# 1. Business Understanding
+# 2. Data Understanding
+# 3. Data Preparation
+# 4. Model Building 
+#  4.1 Linear SVM Model with vanilladot
+#  4.2 Linear SVM Model with rbfdot
+# 5  Cross validation 
+# 	5.1. Tunning linear SVM model 
+# 	5.2. Tuning non - linear SVM model
+
+#####################################################################################
+setwd("C:/users/Srishtik/Downloads")
+
+########################################################################################
+# 1. Business Understanding: 
+# Suppose that you have an image of a digit submitted by a user via a scanner, a tablet, or other digital devices. 
+# The goal is to develop a model that can correctly identify the digit (between 0-9) written in an image. 
+
+# Objective: 
+# We are required to develop a model using Support Vector Machine which should correctly classify the handwritten digits 
+# based on the pixel values given as features.
+
+#####################################################################################
+
+# 2. Data Understanding: 
+# http://yann.lecun.com/exdb/mnist/
+# Number of Instances: 60000
+# Number of Attributes: 785 (784 continuous, 1 nominal class label)
+
+#3. Data Preparation: 
+
+
+
+install.packages("caret")
+install.packages("kernlab")
+install.packages("dplyr")
+install.packages("readr")
+install.packages("ggplot2")
+install.packages("gridExtra")
+
+##Loading Neccessary libraries
+
+library(caret)
+library(kernlab)
+library(dplyr)
+library(readr)
+library(ggplot2)
+library(gridExtra)
+
+
+#Loading Data
+
+train_data <- read.delim("mnist_train.csv",sep = ",", stringsAsFactors = F,header = F)
+test_data <- read.delim("mnist_test.csv",sep = ",", stringsAsFactors = F,header = F)
+						 
+#Understanding Dimensions
+
+########################### EDA - Exploratory Data Analysis ################################################
+dim(train_data)
+dim(test_data)
+
+#Structure of the dataset
+
+str(train_data)
+
+#printing first few rows
+
+head(train_data)
+
+#Exploring the data
+
+summary(train_data)
+#Structure of the dataset
+
+str(test_data)
+
+#printing first few rows
+
+head(test_data)
+
+#Exploring the data
+
+summary(test_data)
+
+########################### Data Preparation ################################################
+#checking missing value in training data and replacing them with 0
+sapply(train_data, function(x) sum(is.na(x)))
+
+#checking missing value in test data and replacing them with 0
+sapply(test_data, function(x) sum(is.na(x)))
+
+
+#Making our target class to factor
+
+train_data$V1<-factor(train_data$V1)
+test_data$V1<-factor(test_data$V1)
+
+########################### EDA - Exploratory Data Analysis ################################################
+
+
+#function used in checking if any column is completely zero
+na.test <-  function (data) {
+  lapply(data, function(x) all(x == 0))
+      
+      }
+      
+	### Checking training and test data 
+miss_train <- na.test (train_data)
+miss_test <- na.test (test_data)
+
+###Counting the number of columns with zero values, since the number of all columns with zero values are 67 whereas in test data columns with all zero values are 116
+### And selection will take time as well. Hence leaving this here.
+
+#> count3 <- length(which(miss_train == TRUE)) 
+#> count3
+#[1] 67
+#> count3 <- length(which(miss_test == TRUE)) 
+#> count3
+#[1] 116
+#> count3 <- length(which(miss_train == FALSE)) 
+#> count3
+#[1] 718
+#> count3 <- length(which(miss_test == FALSE)) 
+#> count3
+
+
+########################### Data Transformation ################################################
+
+
+###Renaming the columns so as to make the data more relevant while reading
+colnames(train_data) <- c("Y", paste("X.", 1:784, sep = ""))
+class(train_data[, 1])
+
+colnames(test_data) <- c("Y", paste("X.", 1:784, sep = ""))
+class(test_data[, 1])
+
+
+#################################SCALING THE DATA ##################################################
+
+##### All 784 columns, except first column, are having values between 0 and 255. So need to scale the data.
+
+#scale train data for [0,255] -> [0,1]
+
+
+train_data[,2:ncol(train_data)] = (as.matrix(train_data[,2:ncol(train_data)]/255))
+
+#scale test data for [0,255] -> [0,1]
+
+
+test_data[,2:ncol(test_data)] = (as.matrix(test_data[,2:ncol(test_data)]/255))
+
+
+########################### Sampling Data for Model Testing ################################################
+# Sampling the data between train and test
+
+set.seed(3423)
+
+indices = sample(1:nrow(train_data), 0.1*nrow(train_data))
+
+train_sample = train_data[indices,]
+
+train_remain = train_data[!(indices),]
+
+indices_t = sample(1:nrow(test_data), 0.1*nrow(test_data))
+
+test_sample = test_data[indices_t,]
+
+test_remain = test_data[!(indices_t),]
+
+
+########################### Model Constructing ################################################
+
+#Constructing Model
+
+###If the number of features is large, one may not need to map data to a higher dimensional
+###space as in our case we have 784 features. That is, the nonlinear mapping does not improve the performance.
+####Using the linear kernel is good enough, and one only searches for the parameter C.
+
+########################### SVM -- VanillaDot --- Linear Kernel ################################################
+#Using Linear Kernel
+Model_linear <- ksvm(Y ~ ., data = train_sample, scale = FALSE, kernel = "vanilladot")
+Eval_linear<- predict(Model_linear, test_sample)
+
+#confusion matrix - Linear Kernel
+
+	confusionMatrix(Eval_linear,test_sample$Y)
+
+#Confusion Matrix and Statistics
+#
+#          Reference
+#Prediction   0   1   2   3   4   5   6   7   8   9
+#         0  98   0   6   1   0   0   1   0   2   0
+#         1   0 108   0   0   1   0   1   0   0   0
+#         2   0   0 100   4   0   0   3   6   4   0
+#         3   0   0   1  80   0   4   0   0   2   0
+#         4   0   0   3   0  87   3   1   1   1   5
+#         5   0   0   0   5   0  80   1   0   3   0
+#         6   2   0   0   0   1   1  97   0   0   0
+#         7   1   0   0   0   0   0   0 110   0   3
+#         8   0   0   0   5   0   2   0   0  85   1
+#         9   0   0   0   1   6   0   0   2   1  70
+#
+#Overall Statistics
+#                                         
+#               Accuracy : 0.915          
+#                 95% CI : (0.896, 0.9315)
+#    No Information Rate : 0.119          
+#    P-Value [Acc > NIR] : < 2.2e-16      
+#                                         
+#                  Kappa : 0.9054         
+# Mcnemar's Test P-Value : NA             
+#
+#Statistics by Class:
+#
+#                     Class: 0 Class: 1 Class: 2 Class: 3 Class: 4 Class: 5 Class: 6 Class: 7 Class: 8 Class: 9
+#Sensitivity            0.9703   1.0000   0.9091   0.8333   0.9158   0.8889   0.9327   0.9244   0.8673   0.8861
+#Specificity            0.9889   0.9978   0.9809   0.9923   0.9845   0.9901   0.9955   0.9955   0.9911   0.9891
+#Pos Pred Value         0.9074   0.9818   0.8547   0.9195   0.8614   0.8989   0.9604   0.9649   0.9140   0.8750
+#Neg Pred Value         0.9966   1.0000   0.9887   0.9825   0.9911   0.9890   0.9922   0.9898   0.9857   0.9902
+#Prevalence             0.1010   0.1080   0.1100   0.0960   0.0950   0.0900   0.1040   0.1190   0.0980   0.0790
+#Detection Rate         0.0980   0.1080   0.1000   0.0800   0.0870   0.0800   0.0970   0.1100   0.0850   0.0700
+#Detection Prevalence   0.1080   0.1100   0.1170   0.0870   0.1010   0.0890   0.1010   0.1140   0.0930   0.0800
+#Balanced Accuracy      0.9796   0.9989   0.9450   0.9128   0.9502   0.9395   0.9641   0.9599   0.9292   0.9376
+#
+
+
+
+#####################################################################
+# Hyperparameter tuning and Cross Validation  - Linear - SVM 
+######################################################################
+
+# We will use the train function from caret package to perform crossvalidation
+
+trainControl <- trainControl(method="cv", number=5)
+# Number - Number of folds 
+# Method - cross validation
+
+metric <- "Accuracy"
+
+set.seed(10)
+
+
+# making a grid of C values. 
+grid <- expand.grid(C = c(0,0.01, 0.05, 0.1, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2,5))
+
+# Performing 5-fold cross validation
+fit.svm <- train(Y~., data=train_sample, method="svmLinear", metric=metric, 
+                 tuneGrid=grid, trControl=trainControl)
+
+# Printing cross validation result
+print(fit.svm)
+
+#6000 samples
+# 784 predictor
+#  10 classes: '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' 
+#
+#No pre-processing
+#Resampling: Cross-Validated (5 fold) 
+#Summary of sample sizes: 4798, 4798, 4799, 4803, 4802 
+#Resampling results across tuning parameters:
+#
+#  C     Accuracy   Kappa    
+#  0.00        NaN        NaN
+#  0.01  0.9181773  0.9090065
+#  0.05  0.9246801  0.9162377
+#  0.10  0.9208430  0.9119677
+#  0.25  0.9121802  0.9023302
+#  0.50  0.9103435  0.9002877
+#  0.75  0.9098418  0.8997296
+#  1.00  0.9108428  0.9008435
+#  1.25  0.9110104  0.9010312
+#  1.50  0.9106770  0.9006593
+#  1.75  0.9108439  0.9008452
+#  2.00  0.9108439  0.9008452
+#  5.00  0.9108439  0.9008452
+
+#################################################################################################################################
+
+#######################################BEST TUNE AT C = 0.05 with Accuracy - 92.4%##############################################
+
+#################################################################################################################################
+# Plotting "fit.svm" results
+plot(fit.svm)
+
+
+
+###############################################################################
+
+# Valdiating the model after cross validation on test data
+
+evaluate_linear_test<- predict(fit.svm, test_sample)
+confusionMatrix(evaluate_linear_test, test_sample$Y)
+
+#Confusion Matrix and Statistics
+#
+#          Reference
+#Prediction   0   1   2   3   4   5   6   7   8   9
+#         0  89   0   0   0   0   0   2   0   0   0
+#         1   0 127   1   0   0   2   1   1   0   1
+#         2   0   0  95   1   2   2   0   3   0   0
+#         3   0   0   1 111   1   4   0   1   2   1
+#         4   0   0   0   0  80   0   0   2   1   7
+#         5   0   0   0   2   0  82   0   0   6   2
+#         6   0   0   0   0   0   3  96   0   0   0
+#         7   0   0   0   1   0   0   0  81   2   2
+#         8   0   0   2   2   2   3   0   0  78   1
+#         9   0   0   0   1   2   0   0   5   1  88
+#
+#Overall Statistics
+#                                          
+#               Accuracy : 0.927           
+#                 95% CI : (0.9091, 0.9423)
+#    No Information Rate : 0.127           
+#    P-Value [Acc > NIR] : < 2.2e-16       
+#                                          
+#                  Kappa : 0.9187          
+# Mcnemar's Test P-Value : NA              
+#
+#Statistics by Class:
+#
+#                     Class: 0 Class: 1 Class: 2 Class: 3 Class: 4 Class: 5
+#Sensitivity            1.0000   1.0000   0.9596   0.9407   0.9195   0.8542
+#Specificity            0.9978   0.9931   0.9911   0.9887   0.9890   0.9889
+#Pos Pred Value         0.9780   0.9549   0.9223   0.9174   0.8889   0.8913
+#Neg Pred Value         1.0000   1.0000   0.9955   0.9920   0.9923   0.9846
+#Prevalence             0.0890   0.1270   0.0990   0.1180   0.0870   0.0960
+#Detection Rate         0.0890   0.1270   0.0950   0.1110   0.0800   0.0820
+#Detection Prevalence   0.0910   0.1330   0.1030   0.1210   0.0900   0.0920
+#Balanced Accuracy      0.9989   0.9966   0.9754   0.9647   0.9543   0.9216
+#                     Class: 6 Class: 7 Class: 8 Class: 9
+#Sensitivity            0.9697   0.8710   0.8667   0.8627
+#Specificity            0.9967   0.9945   0.9890   0.9900
+#Pos Pred Value         0.9697   0.9419   0.8864   0.9072
+#Neg Pred Value         0.9967   0.9869   0.9868   0.9845
+#Prevalence             0.0990   0.0930   0.0900   0.1020
+#Detection Rate         0.0960   0.0810   0.0780   0.0880
+#Detection Prevalence   0.0990   0.0860   0.0880   0.0970
+#Balanced Accuracy      0.9832   0.9327   0.9278   0.9264
+
+
+###########################  Now Checking -- If Non - Linear model performs better than Linear ################################################
+
+#Using RBF Kernel to check if it is non - linear and fits it better.
+
+
+Model_RBF <- ksvm(Y~ ., data = train_sample, kernel = "rbfdot", kpar = "automatic", C = 1, cross = 5)
+Eval_RBF<- predict(Model_RBF, test_sample)
+
+#confusion matrix - RBF Kernel
+confusionMatrix(Eval_RBF,test_sample$Y)
+
+#Confusion Matrix and Statistics
+#
+#          Reference
+#Prediction   0   1   2   3   4   5   6   7   8   9
+#         0 100   0   3   0   0   0   0   0   0   0
+#         1   0 108   0   0   1   0   0   2   0   0
+#         2   0   0 104   4   0   0   0   4   0   0
+#         3   0   0   0  87   0   0   0   0   0   2
+#         4   0   0   1   0  89   3   0   0   1   1
+#         5   0   0   0   2   0  86   0   0   2   0
+#         6   1   0   0   0   1   0 103   0   0   0
+#         7   0   0   1   0   0   1   0 112   0   1
+#         8   0   0   1   1   0   0   1   0  94   1
+#         9   0   0   0   2   4   0   0   1   1  74
+#
+#Overall Statistics
+#                                          
+#               Accuracy : 0.957           
+#                 95% CI : (0.9425, 0.9687)
+#    No Information Rate : 0.119           
+#    P-Value [Acc > NIR] : < 2.2e-16       
+#                                          
+#                  Kappa : 0.9522          
+# Mcnemar's Test P-Value : NA              
+#
+#Statistics by Class:
+#
+#                     Class: 0 Class: 1 Class: 2 Class: 3 Class: 4 Class: 5 Class: 6 Class: 7 Class: 8 Class: 9
+#Sensitivity            0.9901   1.0000   0.9455   0.9062   0.9368   0.9556   0.9904   0.9412   0.9592   0.9367
+#Specificity            0.9967   0.9966   0.9910   0.9978   0.9934   0.9956   0.9978   0.9966   0.9956   0.9913
+#Pos Pred Value         0.9709   0.9730   0.9286   0.9775   0.9368   0.9556   0.9810   0.9739   0.9592   0.9024
+#Neg Pred Value         0.9989   1.0000   0.9932   0.9901   0.9934   0.9956   0.9989   0.9921   0.9956   0.9946
+#Prevalence             0.1010   0.1080   0.1100   0.0960   0.0950   0.0900   0.1040   0.1190   0.0980   0.0790
+#Detection Rate         0.1000   0.1080   0.1040   0.0870   0.0890   0.0860   0.1030   0.1120   0.0940   0.0740
+#Detection Prevalence   0.1030   0.1110   0.1120   0.0890   0.0950   0.0900   0.1050   0.1150   0.0980   0.0820
+#Balanced Accuracy      0.9934   0.9983   0.9682   0.9520   0.9651   0.9756   0.9941   0.9689   0.9774   0.9640
+
+
+
+#####   Hyperparameter tuning and Cross Validation #####################
+#
+## We will use the train function from caret package to perform Cross Validation. 
+#
+##traincontrol function Controls the computational nuances of the train function.
+## i.e. method =  CV means  Cross Validation.
+##      Number = 2 implies Number of folds in CV.
+#
+trainControl <- trainControl(method="cv", number=5)
+
+## Metric <- "Accuracy" implies our Evaluation metric is Accuracy.
+#
+metric <- "Accuracy"
+#
+##Expand.grid functions takes set of hyperparameters, that we shall pass to our model.
+#
+set.seed(3542)
+#grid <- expand.grid(.sigma=c(0.01, 0.05), .C=c(1,2,5,10) )
+
+grid <- expand.grid(.sigma=c(10^(-1:2)), .C=c(.05,0.1,2))
+#
+#
+#
+##train function takes Target ~ Prediction, Data, Method = Algorithm
+##Metric = Type of metric, tuneGrid = Grid of Parameters,
+## trcontrol = Our traincontrol method.
+#
+fit.svm_radial <- train(Y~., data=train_sample, method="svmRadial", metric=metric, 
+              tuneGrid=grid, trControl=trainControl)
+#
+print(fit.svm_radial)
+#6000 samples
+# 784 predictor
+#  10 classes: '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' 
+#
+#No pre-processing
+#Resampling: Cross-Validated (5 fold) 
+#Summary of sample sizes: 4801, 4799, 4800, 4799, 4801 
+#Resampling results across tuning parameters:
+#
+#  sigma  C     Accuracy   Kappa    
+#    0.1  0.05  0.2036707  0.1052446
+#    0.1  0.10  0.2181689  0.1214230
+#    0.1  2.00  0.8421688  0.8244576
+#    1.0  0.05  0.1181666  0.0000000
+#    1.0  0.10  0.1181666  0.0000000
+#    1.0  2.00  0.1181666  0.0000000
+#   10.0  0.05  0.1181666  0.0000000
+#   10.0  0.10  0.1181666  0.0000000
+#   10.0  2.00  0.1181666  0.0000000
+#  100.0  0.05  0.1181666  0.0000000
+#  100.0  0.10  0.1181666  0.0000000
+#  100.0  2.00  0.1181666  0.0000000
+
+####################################################################################################################################
+#Accuracy was used to select the optimal model using the largest value.
+
+#The final values used for the model with SVM - RFBDOT model were sigma = 0.1 and C = 2.
+
+####################################################################################################################################
+plot(fit.svm_radial)
+
+
+# Validating the model results on test data
+evaluate_non_linear<- predict(fit.svm_radial, test_sample)
+confusionMatrix(evaluate_non_linear, test_sample$Y)
+
+#Confusion Matrix and Statistics
+#
+#          Reference
+#Prediction   0   1   2   3   4   5   6   7   8   9
+#         0  78   0   0   0   0   0   2   0   0   0
+#         1   0 126   0   0   0   0   0   0   0   0
+#         2  11   1  97   9  18  18  14  12  14  12
+#         3   0   0   0 107   0   2   0   0   3   1
+#         4   0   0   0   0  66   0   0   0   0   4
+#         5   0   0   0   2   0  74   0   0   1   0
+#         6   0   0   0   0   0   0  82   0   0   0
+#         7   0   0   0   0   0   0   0  79   0   0
+#         8   0   0   2   0   2   2   1   0  72   0
+#         9   0   0   0   0   1   0   0   2   0  85
+#
+#Overall Statistics
+#                                          
+#               Accuracy : 0.866           
+#                 95% CI : (0.8433, 0.8865)
+#    No Information Rate : 0.127           
+#    P-Value [Acc > NIR] : < 2.2e-16       
+#                                          
+#                  Kappa : 0.8508          
+# Mcnemar's Test P-Value : NA              
+#
+#Statistics by Class:
+#
+#                     Class: 0 Class: 1 Class: 2 Class: 3 Class: 4 Class: 5
+#Sensitivity            0.8764   0.9921   0.9798   0.9068   0.7586   0.7708
+#Specificity            0.9978   1.0000   0.8790   0.9932   0.9956   0.9967
+#Pos Pred Value         0.9750   1.0000   0.4709   0.9469   0.9429   0.9610
+#Neg Pred Value         0.9880   0.9989   0.9975   0.9876   0.9774   0.9762
+#Prevalence             0.0890   0.1270   0.0990   0.1180   0.0870   0.0960
+#Detection Rate         0.0780   0.1260   0.0970   0.1070   0.0660   0.0740
+#Detection Prevalence   0.0800   0.1260   0.2060   0.1130   0.0700   0.0770
+#Balanced Accuracy      0.9371   0.9961   0.9294   0.9500   0.8771   0.8838
+#                     Class: 6 Class: 7 Class: 8 Class: 9
+#Sensitivity            0.8283   0.8495   0.8000   0.8333
+#Specificity            1.0000   1.0000   0.9923   0.9967
+#Pos Pred Value         1.0000   1.0000   0.9114   0.9659
+#Neg Pred Value         0.9815   0.9848   0.9805   0.9814
+#Prevalence             0.0990   0.0930   0.0900   0.1020
+#Detection Rate         0.0820   0.0790   0.0720   0.0850
+#Detection Prevalence   0.0820   0.0790   0.0790   0.0880
+#Balanced Accuracy      0.9141   0.9247   0.8962   0.9150
+
+####################################################################################################################################
+####################################################################################################################################
+
+# RESULTS:
+
+# Since, the accuracy of Linear Model is 92.4% versus 86.6% for non - linear model.Hence, we will go ahead with SVM Linear Model.
+# print(fit.svm)
+
+#
+#  C     Accuracy   Kappa    
+#  0.00        NaN        NaN
+#  0.01  0.9181773  0.9090065
+#  0.05  0.9246801  0.9162377
+#  0.10  0.9208430  0.9119677
+#  0.25  0.9121802  0.9023302
+#  0.50  0.9103435  0.9002877
+#  0.75  0.9098418  0.8997296
+#  1.00  0.9108428  0.9008435
+#  1.25  0.9110104  0.9010312
+#  1.50  0.9106770  0.9006593
+#  1.75  0.9108439  0.9008452
+#  2.00  0.9108439  0.9008452
+#  5.00  0.9108439  0.9008452
+
+#################################################################################################################################
+
+#######################################BEST TUNE AT C = 0.05 with Accuracy - 92.4%##############################################
+
+#################################################################################################################################
+# Plotting "fit.svm" results
+plot(fit.svm)
+
+
+
+###############################################################################
+
+# Valdiating the model after cross validation on test data
+
+evaluate_linear_test<- predict(fit.svm, test_sample)
+
+####################################################################################################################################
+####################################################################################################################################
