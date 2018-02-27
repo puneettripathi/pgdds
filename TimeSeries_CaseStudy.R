@@ -19,12 +19,14 @@ Data2 <- summarize(Data1, tot_Sales = sum(Sales),
                           tot_Profit = sum(Profit))
 
 
+
+#Steps are to find the 2 most profitable and consistently profitable segments.
 Data3 <- group_by(Data2, Market, Segment)
 
 Data4 <- summarise(Data3, mean_Profit = mean(tot_Profit),
                           sd_Profit = sd(tot_Profit))
 
-Data4$COV <- Data4$sd_Profit / Data4$mean_Profit
+Data4$COV <- (Data4$sd_Profit / Data4$mean_Profit) * 100
 
 #As per Max profit, top 2:
 #APAC Consumer 4642.0325 2934.3785 0.6321323
@@ -34,15 +36,17 @@ Data4$COV <- Data4$sd_Profit / Data4$mean_Profit
 #EU Consumer   3930.9939 2454.1398 0.6243052
 #APAC Consumer 4642.0325 2934.3785 0.6321323
 
+
+
 #Steps for creating time-series for APAC Consumer
 Data_AC <- arrange(filter(Data2, Market == 'APAC', Segment == 'Consumer'), Order.Year, Order.Month)
 Data_AC$Month <- seq.int(nrow(Data_AC))
-TS_AC_Profit <- select(ungroup(Data_AC), Month, tot_Profit)
+TS_AC_Sales <- select(ungroup(Data_AC), Month, tot_Sales)
 TS_AC_Quantity <- select(ungroup(Data_AC), Month, tot_Quantity)
 
 #Steps for creating time-series for EU Consumer
 Data_EC <- arrange(filter(Data2, Market == 'EU', Segment == 'Consumer'), Order.Year, Order.Month)
 Data_EC$Month <- seq.int(nrow(Data_EC))
-TS_EC_Profit <- select(ungroup(Data_EC), Month, tot_Profit)
+TS_EC_Sales <- select(ungroup(Data_EC), Month, tot_Sales)
 TS_EC_Quantity <- select(ungroup(Data_EC), Month, tot_Quantity)
 
