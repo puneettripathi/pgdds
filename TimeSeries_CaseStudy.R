@@ -129,14 +129,16 @@ global_pred_out <- predict(lmfit,data.frame(Month =timevals_out))
 fcast <- global_pred_out
 
 #Now, let's compare our prediction with the actual values, using MAPE
-MAPE_class_dec <- forecast::accuracy(fcast,outdata[,2])#[5]
+MAPE_class_dec <- forecast::accuracy(fcast,outdata$Value)[5]
 MAPE_class_dec
+#23.93068
 
 #Let's also plot the predictions along with original values, to
 #get a visual feel of the fit
 class_dec_pred <- c(ts(global_pred),ts(global_pred_out))
 plot(total_timeser, col = "black")
 lines(class_dec_pred, col = "red")
+
 
 #So, that was classical decomposition, now let's do an ARIMA fit
 autoarima <- auto.arima(timeser)
@@ -163,8 +165,9 @@ kpss.test(resi_auto_arima)
 
 #Also, let's evaluate the model using MAPE
 fcast_auto_arima <- predict(autoarima, n.ahead = 6)
-MAPE_auto_arima <- accuracy(fcast_auto_arima$pred,outdata[,2])[5]
+MAPE_auto_arima <- accuracy(fcast_auto_arima$pred,outdata$Value)[5]
 MAPE_auto_arima
+#27.68952
 
 #Lastly, let's plot the predictions along with original values, to
 #get a visual feel of the fit
