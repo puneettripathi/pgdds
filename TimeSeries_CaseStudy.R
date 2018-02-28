@@ -59,12 +59,15 @@ names(Data_ts) <- c("Month", "Value")
 nrow(Data_ts)
 
 total_timeser <- ts(Data_ts$Value)
+plot(total_timeser)
+#We can clearly see from the plot that there is a global trend, no seasonality observed.
+
 indata <- Data_ts[1:42,]
 timeser <- ts(indata$Value)
 plot(timeser)
 
 #Smoothing the series - Moving Average Smoothing
-w <- 1
+w <- 2
 smoothedseries <- stats::filter(timeser, 
                                 filter=rep(1/(2*w+1),(2*w+1)), 
                                 method='convolution', sides=2)
@@ -90,10 +93,11 @@ colnames(smootheddf) <- c('Month', 'Value')
 
 #Now, let's fit a additive model with trend and seasonality to the data
 #Seasonality will be modeled using a sinusoid function
-lmfit <- lm(Value ~ sin(0.5*Month) + cos(0.5*Month) + poly(Month,3), data=smootheddf)
+lmfit <- lm(Value ~ sin(0.5*Month) * poly(Month,3) + cos(0.5*Month) * poly(Month,3), data=smootheddf)
 global_pred <- predict(lmfit, Month=timevals_in)
-summary(global_pred)
-lines(timevals_in, global_pred, col='red', lwd=2)
+#summary(global_pred)
+#lines(timevals_in, global_pred, col='red', lwd=2)
+lines(global_pred, col='red', lwd=2)
 
 #Now, let's look at the locally predictable series
 #We will model it as an ARMA series
@@ -105,13 +109,13 @@ armafit <- auto.arima(local_pred)
 
 tsdiag(armafit)
 armafit
-# 
 # Series: local_pred 
 # ARIMA(0,0,0) with zero mean 
 # 
-# sigma^2 estimated as 1.09e+08:  log likelihood=-448.24
-# AIC=898.49   AICc=898.59   BIC=900.23
+# sigma^2 estimated as 91944190:  log likelihood=-444.67
+# AIC=891.33   AICc=891.43   BIC=893.07
 # 
+#
 
 #We'll check if the residual series is white noise
 resi <- local_pred-fitted(armafit)
@@ -152,6 +156,9 @@ autoarima
 # 
 # sigma^2 estimated as 174361555:  log likelihood=-447.11
 # AIC=898.23   AICc=898.55   BIC=901.66
+
+#Lower the AIC and BIC value, better the model
+#Log likelihood must be higher for better model
 tsdiag(autoarima)
 plot(autoarima$x, col="black")
 lines(fitted(autoarima), col="red")
