@@ -10,6 +10,7 @@ library(dplyr)
 library(forecast)
 library(tseries)
 require(graphics)
+library(ggplot2)
 
 ###### DATA PREPARATION #######
 
@@ -80,7 +81,24 @@ arrange(Data4,COV)
 #  1     EU    Consumer    3930.994 2454.1398 188687.71  62.43052
 #2   APAC    Consumer    4642.033 2934.3785 222817.56  63.21323
 
+# Checking the same in Plot
+ggplot(Data4, aes(x=Market, y=Profit, fill=Segment))+ geom_bar(stat = "identity")
 
+# Further checking sales, quantity and profit
+bar_theme1<- theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5), 
+                   legend.position="none")
+
+ggplot(Data3, aes(x=paste(Order.Year,Order.Month), y=tot_Sales, fill=Market))+
+  geom_bar(stat = "identity")+
+  bar_theme1
+
+ggplot(Data3, aes(x=paste(Order.Year,Order.Month), y=tot_Quantity, fill=Market))+
+  geom_bar(stat = "identity")+
+  bar_theme1
+
+ggplot(Data3, aes(x=paste(Order.Year,Order.Month), y=tot_Profit, fill=Market))+
+  geom_bar(stat = "identity")+
+  bar_theme1
 
 #Preparing Data for APAC Consumer Sales and Demand (Quantity)
 Data_AC <- arrange(filter(Data2, Market == 'APAC', Segment == 'Consumer'), Order.Year, Order.Month)
@@ -109,7 +127,9 @@ plot(total_timeser)
 indata <- Data_ts[1:42,]
 timeser <- ts(indata$Value)
 plot(timeser)
-
+#Smoothing the series - HoltWinters
+hw = HoltWinters(timeser, beta=FALSE, gamma=FALSE)
+plot(hw)
 #Smoothing the series - Moving Average Smoothing
 w <- 1
 smoothedseries <- stats::filter(timeser, 
@@ -130,7 +150,7 @@ for (i in seq(n-w+1, n)) {
 timevals_in <- indata$Month
 lines(smoothedseries, col="blue", lwd=2)
 #From the plot of smoothed data, we can observe the seasonality (additive)
-
+# Moving Average fits better than HoltWinters, let's use that
 
 ######## CLASSICAL DECOMPOSITION ########
 #Building a model on the smoothed time series using classical decomposition
@@ -257,6 +277,10 @@ indata <- Data_ts[1:42,]
 timeser <- ts(indata$Value)
 plot(timeser)
 
+#Smoothing the series - HoltWinters
+hw = HoltWinters(timeser, beta=FALSE, gamma=FALSE)
+plot(hw)
+
 #Smoothing the series - Moving Average Smoothing
 w <- 1
 smoothedseries <- stats::filter(timeser, 
@@ -277,7 +301,7 @@ for (i in seq(n-w+1, n)) {
 timevals_in <- indata$Month
 lines(smoothedseries, col="blue", lwd=2)
 ##From the plot of smoothed data, we can observe the seasonality (additive)
-
+# Moving Average fits better than HoltWinters, let's use that
 
 ######## CLASSICAL DECOMPOSITION ########
 #Building a model on the smoothed time series using classical decomposition
@@ -400,6 +424,10 @@ indata <- Data_ts[1:42,]
 timeser <- ts(indata$Value)
 plot(timeser)
 
+#Smoothing the series - HoltWinters
+hw = HoltWinters(timeser, beta=FALSE, gamma=FALSE)
+plot(hw)
+
 #Smoothing the series - Moving Average Smoothing
 w <- 1
 smoothedseries <- stats::filter(timeser, 
@@ -420,6 +448,7 @@ for (i in seq(n-w+1, n)) {
 timevals_in <- indata$Month
 lines(smoothedseries, col="blue", lwd=2)
 ##From the plot of smoothed data, we can observe the seasonality (additive)
+# Moving average again looks better on the plot, let's got with MA
 
 ######## CLASSICAL DECOMPOSITION ########
 #Building a model on the smoothed time series using classical decomposition
@@ -545,6 +574,9 @@ plot(total_timeser)
 indata <- Data_ts[1:42,]
 timeser <- ts(indata$Value)
 plot(timeser)
+#Smoothing the series - HoltWinters
+hw = HoltWinters(timeser, beta=FALSE, gamma=FALSE)
+plot(hw)
 
 #Smoothing the series - Moving Average Smoothing
 w <- 1
@@ -566,7 +598,7 @@ for (i in seq(n-w+1, n)) {
 timevals_in <- indata$Month
 lines(smoothedseries, col="blue", lwd=2)
 ##From the plot of smoothed data, we can observe the seasonality (additive)
-
+# Using Moving Average for this one too
 
 ######## CLASSICAL DECOMPOSITION ########
 #Building a model on the smoothed time series using classical decomposition
