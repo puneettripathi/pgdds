@@ -556,7 +556,7 @@ MAPE_auto_arima
 # Forecasting future months Using Classical Decomposition
 forecast.decompose.EUS <- predict(lmfit,data.frame(Month =49:54))
 # 1        2        3        4        5        6 
-# 46730.30 44397.88 41865.95 39875.28 39034.17 39669.43 
+# 62973.57 64037.96 65211.83 67164.44 70447.27 75361.70  
 
 
 ####### EU Demand (Quantity) Modeling #######
@@ -717,10 +717,9 @@ Predictions <- data.frame(forecast.decompose.APQ,
                           forecast.decompose.EUS)
 Predictions
 #   forecast.decompose.APQ forecast.decompose.APS forecast.decompose.EUQ forecast.decompose.EUS
-# 1               664.6094               56747.20               718.8526               46730.30
-# 2               635.2503               52945.79               717.0718               44397.88
-# 3               612.2593               50902.72               729.9206               41865.95
-# 4               603.6888               50949.93               752.8836               39875.28
-# 5               614.0768               51885.36               798.2118               39034.17
-# 6               643.3369               52514.01               875.4297               39669.43
-
+# 1               664.6094               56747.20               718.8526               62973.57
+# 2               635.2503               52945.79               717.0718               64037.96
+# 3               612.2593               50902.72               729.9206               65211.83
+# 4               603.6888               50949.93               752.8836               67164.44
+# 5               614.0768               51885.36               798.2118               70447.27
+# 6               643.3369               52514.01               875.4297               75361.70
