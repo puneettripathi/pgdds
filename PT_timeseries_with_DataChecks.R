@@ -129,6 +129,8 @@ for (i in seq(n-w+1, n)) {
 #Plot the smoothed time series
 timevals_in <- indata$Month
 lines(smoothedseries, col="blue", lwd=2)
+#From the plot of smoothed data, we can observe the seasonality (additive)
+
 
 ######## CLASSICAL DECOMPOSITION ########
 #Building a model on the smoothed time series using classical decomposition
@@ -140,8 +142,7 @@ colnames(smootheddf) <- c('Month', 'Value')
 #Seasonality will be modeled using a sinusoid function
 lmfit <- lm(Value ~ sin(0.5*Month) + Month + cos(Month) , data=smootheddf)
 global_pred <- predict(lmfit, Month=timevals_in)
-#summary(global_pred)
-#lines(timevals_in, global_pred, col='red', lwd=2)
+summary(global_pred)
 lines(global_pred, col='red', lwd=2)
 
 #Now, let's look at the locally predictable series
@@ -162,8 +163,9 @@ armafit
 # 
 #
 
-#We'll check if the residual series is white noise
-resi <- local_pred-fitted(armafit)
+#As there is no ARMA model fit for local predictible part,
+#we will prove that local pred is stationary.
+resi <- local_pred
 adf.test(resi,alternative = "stationary")
 #Dickey-Fuller = -4.3741, Lag order = 3, p-value = 0.01
 #alternative hypothesis: stationary
@@ -188,8 +190,6 @@ class_dec_pred <- c(ts(global_pred),ts(global_pred_out))
 plot(total_timeser, col = "black")
 lines(class_dec_pred, col = "red")
 
-# Forecasting future months Using Classical Decomposition
-forecast.decompose <- predict(lmfit,data.frame(Month =49:54))
 
 ######## AUTO ARIMA ########
 #So, that was classical decomposition, now let's do an ARIMA fit
@@ -226,16 +226,22 @@ MAPE_auto_arima
 
 #Lastly, let's plot the predictions along with original values, to
 #get a visual feel of the fit
-auto_arima_pred <- c(fitted(autoarima),ts(fcast_auto_arima$pred))
-plot(total_timeser, col = "black")
-lines(auto_arima_pred, col = "purple")
-plot(forecast(auto_arima_pred, h=12))
+# auto_arima_pred <- c(fitted(autoarima),ts(fcast_auto_arima$pred))
+# plot(total_timeser, col = "black")
+# lines(auto_arima_pred, col = "purple")
+# plot(forecast(auto_arima_pred, h=12))
 # 95% confidence interval is very wide, we can't be sure of the prdictions made.
 
+#As the MAPE value is better for classical model decomposition,
+#we will forecast the Revenue (Sales) for APAC Consumer using the same.
+# Forecasting future months Using Classical Decomposition
+forecast.decompose <- predict(lmfit,data.frame(Month =49:54))
+# 1        2        3        4        5        6 
+# 56747.20 52945.79 50902.72 50949.93 51885.36 52514.01 
 
 
 
-####### APAC Demand Modeling #######
+####### APAC Demand (Quantity) Modeling #######
 #For Forecasting Demand(Quantity) for APAC Consumer Segment
 Data_ts <- Data_AC_Quantity
 names(Data_ts) <- c("Month", "Value")
@@ -270,6 +276,9 @@ for (i in seq(n-w+1, n)) {
 #Plot the smoothed time series
 timevals_in <- indata$Month
 lines(smoothedseries, col="blue", lwd=2)
+##From the plot of smoothed data, we can observe the seasonality (additive)
+
+
 ######## CLASSICAL DECOMPOSITION ########
 #Building a model on the smoothed time series using classical decomposition
 #First, let's convert the time series to a dataframe
@@ -280,8 +289,7 @@ colnames(smootheddf) <- c('Month', 'Value')
 #Seasonality will be modeled using a sinusoid function
 lmfit <- lm(Value ~ sin(0.5*Month) + cos(0.5*Month) + poly(Month,2), data=smootheddf)
 global_pred <- predict(lmfit, Month=timevals_in)
-#summary(global_pred)
-#lines(timevals_in, global_pred, col='red', lwd=2)
+summary(global_pred)
 lines(global_pred, col='red', lwd=2)
 
 #Now, let's look at the locally predictable series
@@ -297,13 +305,15 @@ armafit
 # Series: local_pred 
 # ARIMA(0,0,0) with zero mean 
 # 
-# sigma^2 estimated as 13571:  log likelihood=-259.42
-# AIC=520.85   AICc=520.95   BIC=522.59
+# sigma^2 estimated as 13473:  log likelihood=-259.27
+# AIC=520.55   AICc=520.65   BIC=522.28
 # 
 #
 
+#As there is no ARMA model fit for local predictible part,
+#we will prove that local pred is stationary.
 #We'll check if the residual series is white noise
-resi <- local_pred-fitted(armafit)
+resi <- local_pred
 adf.test(resi,alternative = "stationary")
 # Dickey-Fuller = -5.0179, Lag order = 3, p-value = 0.01
 #alternative hypothesis: stationary
@@ -328,8 +338,6 @@ class_dec_pred <- c(ts(global_pred),ts(global_pred_out))
 plot(total_timeser, col = "black")
 lines(class_dec_pred, col = "red")
 
-# Forecasting future months
-forecast.decompose <- predict(lmfit,data.frame(Month =49:54))
 
 ######## AUTO ARIMA ########
 #So, that was classical decomposition, now let's do an ARIMA fit
@@ -361,14 +369,22 @@ MAPE_auto_arima
 
 #Lastly, let's plot the predictions along with original values, to
 #get a visual feel of the fit
-auto_arima_pred <- c(fitted(autoarima),ts(fcast_auto_arima$pred))
-plot(total_timeser, col = "black")
-lines(auto_arima_pred, col = "purple")
-plot(forecast(auto_arima_pred, h=12))
+# auto_arima_pred <- c(fitted(autoarima),ts(fcast_auto_arima$pred))
+# plot(total_timeser, col = "black")
+# lines(auto_arima_pred, col = "purple")
+# plot(forecast(auto_arima_pred, h=12))
 # 95% confidence interval is very wide, we can't be sure of the prdictions made.
 
+#As the MAPE value is better for classical model decomposition,
+#we will forecast the Demand (Quantity) for APAC Consumer using the same.
+# Forecasting future months
+forecast.decompose <- predict(lmfit,data.frame(Month =49:54))
+# 1        2        3        4        5        6 
+# 664.6094 635.2503 612.2593 603.6888 614.0768 643.3369
 
-########## Startiing analysis on EU ###########
+
+
+########## Starting analysis on EU ###########
 #For Forecasting Revenue (Sales) for EU Consumer Segment
 Data_ts <- Data_EC_Sales
 names(Data_ts) <- c("Month", "Value")
@@ -403,6 +419,7 @@ for (i in seq(n-w+1, n)) {
 #Plot the smoothed time series
 timevals_in <- indata$Month
 lines(smoothedseries, col="blue", lwd=2)
+##From the plot of smoothed data, we can observe the seasonality (additive)
 
 ######## CLASSICAL DECOMPOSITION ########
 #Building a model on the smoothed time series using classical decomposition
@@ -414,8 +431,7 @@ colnames(smootheddf) <- c('Month', 'Value')
 #Seasonality will be modeled using a sinusoid function
 lmfit <- lm(Value ~ sin(0.5*Month) + Month, data=smootheddf)
 global_pred <- predict(lmfit, Month=timevals_in)
-#summary(global_pred)
-#lines(timevals_in, global_pred, col='red', lwd=2)
+summary(global_pred)
 lines(global_pred, col='red', lwd=2)
 
 #Now, let's look at the locally predictable series
@@ -436,8 +452,10 @@ armafit
 # 
 #
 
+#As there is no ARMA model fit for local predictible part,
+#we will prove that local pred is stationary.
 #We'll check if the residual series is white noise
-resi <- local_pred-fitted(armafit)
+resi <- local_pred
 adf.test(resi,alternative = "stationary")
 #Dickey-Fuller = -3.9759, Lag order = 3, p-value = 0.02017
 #alternative hypothesis: stationary
@@ -462,22 +480,20 @@ class_dec_pred <- c(ts(global_pred),ts(global_pred_out))
 plot(total_timeser, col = "black")
 lines(class_dec_pred, col = "red")
 
-# Forecasting future months Using Classical Decomposition
-forecast.decompose <- predict(lmfit,data.frame(Month =49:54))
 
 ######## AUTO ARIMA ########
 #So, that was classical decomposition, now let's do an ARIMA fit
 autoarima <- auto.arima(timeser)
 autoarima
-# ARIMA(0,1,1) 
+# ARIMA(2,1,0) 
 # 
 # Coefficients:
-#           ma1
-#       -0.7559
-# s.e.   0.1381
+#   ar1      ar2
+# -0.5796  -0.4906
+# s.e.   0.1346   0.1310
 # 
-# sigma^2 estimated as 174361555:  log likelihood=-447.11
-# AIC=898.23   AICc=898.55   BIC=901.66
+# sigma^2 estimated as 168564623:  log likelihood=-445.84
+# AIC=897.67   AICc=898.32   BIC=902.81
 
 #Lower the AIC and BIC value, better the model
 #Log likelihood must be higher for better model
@@ -500,16 +516,21 @@ MAPE_auto_arima
 
 #Lastly, let's plot the predictions along with original values, to
 #get a visual feel of the fit
-auto_arima_pred <- c(fitted(autoarima),ts(fcast_auto_arima$pred))
-plot(total_timeser, col = "black")
-lines(auto_arima_pred, col = "purple")
-plot(forecast(auto_arima_pred, h=12))
+# auto_arima_pred <- c(fitted(autoarima),ts(fcast_auto_arima$pred))
+# plot(total_timeser, col = "black")
+# lines(auto_arima_pred, col = "purple")
+# plot(forecast(auto_arima_pred, h=12))
 # 95% confidence interval is very wide, we can't be sure of the prdictions made.
 
+#As the MAPE value is better for classical model decomposition,
+#we will forecast the Revenue (Sales) for EU Consumer using the same.
+# Forecasting future months Using Classical Decomposition
+forecast.decompose <- predict(lmfit,data.frame(Month =49:54))
+# 1        2        3        4        5        6 
+# 46730.30 44397.88 41865.95 39875.28 39034.17 39669.43 
 
 
-
-####### EU Demand Modeling #######
+####### EU Demand (Quantity) Modeling #######
 #For Forecasting Demand(Quantity) for EU Consumer Segment
 Data_ts <- Data_EC_Quantity
 names(Data_ts) <- c("Month", "Value")
@@ -544,6 +565,9 @@ for (i in seq(n-w+1, n)) {
 #Plot the smoothed time series
 timevals_in <- indata$Month
 lines(smoothedseries, col="blue", lwd=2)
+##From the plot of smoothed data, we can observe the seasonality (additive)
+
+
 ######## CLASSICAL DECOMPOSITION ########
 #Building a model on the smoothed time series using classical decomposition
 #First, let's convert the time series to a dataframe
@@ -554,13 +578,12 @@ colnames(smootheddf) <- c('Month', 'Value')
 #Seasonality will be modeled using a sinusoid function
 lmfit <- lm(Value ~ sin(0.5*Month) + Month, data=smootheddf)
 global_pred <- predict(lmfit, Month=timevals_in)
-#summary(global_pred)
-#lines(timevals_in, global_pred, col='red', lwd=2)
+summary(global_pred)
 lines(global_pred, col='red', lwd=2)
 
 #Now, let's look at the locally predictable series
 #We will model it as an ARMA series
-local_pred <- timeser-global_pred
+local_pred <- timeser - global_pred
 plot(local_pred, col='red', type = "l")
 acf(local_pred)
 acf(local_pred, type="partial")
@@ -572,8 +595,8 @@ armafit
 # ARIMA(1,0,2) with non-zero mean 
 # 
 # Coefficients:
-#   ar1     ma1      ma2
-# -0.5238  0.3293  -0.4670
+#           ar1     ma1      ma2
+#       -0.5238  0.3293  -0.4670
 # s.e.   0.2066  0.1923   0.1298
 # 
 # sigma^2 estimated as 12749:  log likelihood=-256.85
@@ -581,7 +604,7 @@ armafit
 #
 
 #We'll check if the residual series is white noise
-resi <- local_pred-fitted(armafit)
+resi <- local_pred - fitted(armafit)
 adf.test(resi,alternative = "stationary")
 # Dickey-Fuller = -2.5829, Lag order = 3, p-value = 0.3439
 #alternative hypothesis: stationary
@@ -592,7 +615,8 @@ kpss.test(resi)
 #First, let's make a prediction for the last 6 months
 outdata <- Data_ts[43:48,]
 timevals_out <- outdata$Month
-global_pred_out <- predict(lmfit,data.frame(Month =timevals_out)) + predict(armafit, n.ahead=6)$pred
+global_pred_out <- predict(lmfit,data.frame(Month =timevals_out)) + 
+                          predict(armafit, n.ahead=6)$pred
 fcast <- global_pred_out 
 
 #Now, let's compare our prediction with the actual values, using MAPE
@@ -606,8 +630,6 @@ class_dec_pred <- c(ts(global_pred+fitted(armafit)),ts(global_pred_out))
 plot(total_timeser, col = "black")
 lines(class_dec_pred, col = "red")
 
-# Forecasting future months
-forecast.decompose <- predict(lmfit,data.frame(Month =49:54)) 
 
 ######## AUTO ARIMA ########
 #So, that was classical decomposition, now let's do an ARIMA fit
@@ -616,8 +638,8 @@ autoarima
 # ARIMA(2,1,0) 
 # 
 # Coefficients:
-#   ar1      ar2
-# -0.7359  -0.5879
+#           ar1      ar2
+#       -0.7359  -0.5879
 # s.e.   0.1224   0.1185
 # 
 # sigma^2 estimated as 21185:  log likelihood=-261.9
@@ -642,10 +664,16 @@ MAPE_auto_arima
 
 #Lastly, let's plot the predictions along with original values, to
 #get a visual feel of the fit
-auto_arima_pred <- c(fitted(autoarima),ts(fcast_auto_arima$pred))
-plot(total_timeser, col = "black")
-lines(auto_arima_pred, col = "purple")
-plot(forecast(auto_arima_pred, h=6))
+# auto_arima_pred <- c(fitted(autoarima),ts(fcast_auto_arima$pred))
+# plot(total_timeser, col = "black")
+# lines(auto_arima_pred, col = "purple")
+# plot(forecast(auto_arima_pred, h=6))
 # 95% confidence interval is very wide, we can't be sure of the prdictions made.
 
-
+#As the MAPE value is better for classical model decomposition,
+#we will forecast the Demand (Quantity) for EU Consumer using the same.
+# Forecasting future months
+forecast.decompose <- predict(lmfit,data.frame(Month =49:54)) +
+                      predict(armafit, n.ahead=12)$pred[7:12]
+# 1        2        3        4        5        6 
+# 589.2595 562.0990 534.7386 512.4617 503.8577 511.7848  
