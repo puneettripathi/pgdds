@@ -235,7 +235,7 @@ MAPE_auto_arima
 #As the MAPE value is better for classical model decomposition,
 #we will forecast the Revenue (Sales) for APAC Consumer using the same.
 # Forecasting future months Using Classical Decomposition
-forecast.decompose <- predict(lmfit,data.frame(Month =49:54))
+forecast.decompose.APS <- predict(lmfit,data.frame(Month =49:54))
 # 1        2        3        4        5        6 
 # 56747.20 52945.79 50902.72 50949.93 51885.36 52514.01 
 
@@ -378,7 +378,7 @@ MAPE_auto_arima
 #As the MAPE value is better for classical model decomposition,
 #we will forecast the Demand (Quantity) for APAC Consumer using the same.
 # Forecasting future months
-forecast.decompose <- predict(lmfit,data.frame(Month =49:54))
+forecast.decompose.APQ <- predict(lmfit,data.frame(Month =49:54))
 # 1        2        3        4        5        6 
 # 664.6094 635.2503 612.2593 603.6888 614.0768 643.3369
 
@@ -525,7 +525,7 @@ MAPE_auto_arima
 #As the MAPE value is better for classical model decomposition,
 #we will forecast the Revenue (Sales) for EU Consumer using the same.
 # Forecasting future months Using Classical Decomposition
-forecast.decompose <- predict(lmfit,data.frame(Month =49:54))
+forecast.decompose.EUS <- predict(lmfit,data.frame(Month =49:54))
 # 1        2        3        4        5        6 
 # 46730.30 44397.88 41865.95 39875.28 39034.17 39669.43 
 
@@ -576,7 +576,7 @@ colnames(smootheddf) <- c('Month', 'Value')
 
 #Now, let's fit a additive model with trend and seasonality to the data
 #Seasonality will be modeled using a sinusoid function
-lmfit <- lm(Value ~ sin(0.5*Month) + Month, data=smootheddf)
+lmfit <- lm(Value ~ poly(sin(0.5*Month),2) + cos(0.5*Month) +  poly(Month,3)+log(Month), data=smootheddf)
 global_pred <- predict(lmfit, Month=timevals_in)
 summary(global_pred)
 lines(global_pred, col='red', lwd=2)
@@ -592,37 +592,37 @@ armafit <- auto.arima(local_pred)
 tsdiag(armafit)
 armafit
 # Series: local_pred 
-# ARIMA(1,0,2) with non-zero mean 
+# ARIMA(2,0,0) with zero mean 
 # 
 # Coefficients:
-#           ar1     ma1      ma2
-#       -0.5238  0.3293  -0.4670
-# s.e.   0.2066  0.1923   0.1298
+#   ar1      ar2
+# -0.5963  -0.5813
+# s.e.   0.1218   0.1177
 # 
-# sigma^2 estimated as 12749:  log likelihood=-256.85
-# AIC=521.69   AICc=522.77   BIC=528.64
+# sigma^2 estimated as 8045:  log likelihood=-247.91
+# AIC=501.82   AICc=502.45   BIC=507.03
 #
 
 #We'll check if the residual series is white noise
 resi <- local_pred - fitted(armafit)
 adf.test(resi,alternative = "stationary")
-# Dickey-Fuller = -2.5829, Lag order = 3, p-value = 0.3439
+# Dickey-Fuller = -4.8719, Lag order = 3, p-value = 0.01
 #alternative hypothesis: stationary
 kpss.test(resi)
-#KPSS Level = 0.14343, Truncation lag parameter = 1, p-value = 0.1
+# KPSS Level = 0.04092, Truncation lag parameter = 1, p-value = 0.1
 
 #Now, let's evaluate the model using MAPE
 #First, let's make a prediction for the last 6 months
 outdata <- Data_ts[43:48,]
 timevals_out <- outdata$Month
 global_pred_out <- predict(lmfit,data.frame(Month =timevals_out)) + 
-                          predict(armafit, n.ahead=6)$pred
+  predict(armafit, n.ahead=6)$pred
 fcast <- global_pred_out 
 
 #Now, let's compare our prediction with the actual values, using MAPE
 MAPE_class_dec <- forecast::accuracy(fcast,outdata$Value)[5]
 MAPE_class_dec
-#27.28549
+#25.53489
 
 #Let's also plot the predictions along with original values, to
 #get a visual feel of the fit
@@ -673,7 +673,22 @@ MAPE_auto_arima
 #As the MAPE value is better for classical model decomposition,
 #we will forecast the Demand (Quantity) for EU Consumer using the same.
 # Forecasting future months
-forecast.decompose <- predict(lmfit,data.frame(Month =49:54)) +
-                      predict(armafit, n.ahead=12)$pred[7:12]
+forecast.decompose.EUQ <- predict(lmfit,data.frame(Month =49:54)) +
+  predict(armafit, n.ahead=12)$pred[7:12]
 # 1        2        3        4        5        6 
 # 589.2595 562.0990 534.7386 512.4617 503.8577 511.7848  
+
+# Predicstions for next 6 Months
+Predictions <- data.frame(forecast.decompose.APQ,
+                          forecast.decompose.APS,
+                          forecast.decompose.EUQ,
+                          forecast.decompose.EUS)
+Predictions
+#   forecast.decompose.APQ forecast.decompose.APS forecast.decompose.EUQ forecast.decompose.EUS
+# 1               664.6094               56747.20               718.8526               46730.30
+# 2               635.2503               52945.79               717.0718               44397.88
+# 3               612.2593               50902.72               729.9206               41865.95
+# 4               603.6888               50949.93               752.8836               39875.28
+# 5               614.0768               51885.36               798.2118               39034.17
+# 6               643.3369               52514.01               875.4297               39669.43
+
