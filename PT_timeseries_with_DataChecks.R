@@ -458,7 +458,7 @@ colnames(smootheddf) <- c('Month', 'Value')
 
 #Now, let's fit a additive model with trend and seasonality to the data
 #Seasonality will be modeled using a sinusoid function
-lmfit <- lm(Value ~ sin(0.5*Month) + Month, data=smootheddf)
+lmfit <- lm(Value ~ sin(0.5*Month) + poly(Month,3), data=smootheddf)
 global_pred <- predict(lmfit, Month=timevals_in)
 summary(global_pred)
 lines(global_pred, col='red', lwd=2)
@@ -476,8 +476,8 @@ armafit
 # Series: local_pred 
 # ARIMA(0,0,0) with zero mean 
 # 
-# sigma^2 estimated as 113342644:  log likelihood=-449.06
-# AIC=900.12   AICc=900.22   BIC=901.86
+# sigma^2 estimated as 104234466:  log likelihood=-447.3
+# AIC=896.6   AICc=896.7   BIC=898.34
 # 
 #
 
@@ -486,10 +486,10 @@ armafit
 #We'll check if the residual series is white noise
 resi <- local_pred
 adf.test(resi,alternative = "stationary")
-#Dickey-Fuller = -3.9759, Lag order = 3, p-value = 0.02017
+#Dickey-Fuller = -4.7997, Lag order = 3, p-value = 0.01
 #alternative hypothesis: stationary
 kpss.test(resi)
-#KPSS Level = 0.088036, Truncation lag parameter = 1, p-value = 0.1
+#KPSS Level = 0.026851, Truncation lag parameter = 1, p-value = 0.1
 
 #Now, let's evaluate the model using MAPE
 #First, let's make a prediction for the last 6 months
@@ -501,7 +501,7 @@ fcast <- global_pred_out
 #Now, let's compare our prediction with the actual values, using MAPE
 MAPE_class_dec <- forecast::accuracy(fcast,outdata$Value)[5]
 MAPE_class_dec
-#24.8979
+#21.14684
 
 #Let's also plot the predictions along with original values, to
 #get a visual feel of the fit
