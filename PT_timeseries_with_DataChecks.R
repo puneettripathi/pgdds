@@ -369,7 +369,7 @@ plot(forecast(auto_arima_pred, h=12))
 
 
 ########## Startiing analysis on EU ###########
-#For Forecasting Revenue (Sales) for APAC Consumer Segment
+#For Forecasting Revenue (Sales) for EU Consumer Segment
 Data_ts <- Data_EC_Sales
 names(Data_ts) <- c("Month", "Value")
 
@@ -571,51 +571,58 @@ armafit
 # Series: local_pred 
 # ARIMA(1,0,2) with non-zero mean 
 # 
-# sigma^2 estimated as 11728:  log likelihood=-254.76
-# AIC=519.52   AICc=521.19   BIC=528.21
+# Coefficients:
+#   ar1     ma1      ma2
+# -0.5238  0.3293  -0.4670
+# s.e.   0.2066  0.1923   0.1298
 # 
+# sigma^2 estimated as 12749:  log likelihood=-256.85
+# AIC=521.69   AICc=522.77   BIC=528.64
 #
 
 #We'll check if the residual series is white noise
 resi <- local_pred-fitted(armafit)
 adf.test(resi,alternative = "stationary")
-#Dickey-Fuller = -2.7939, Lag order = 3, p-value = 0.2607
+# Dickey-Fuller = -2.5829, Lag order = 3, p-value = 0.3439
 #alternative hypothesis: stationary
 kpss.test(resi)
-#KPSS Level = 0.14018, Truncation lag parameter = 1, p-value = 0.1
+#KPSS Level = 0.14343, Truncation lag parameter = 1, p-value = 0.1
 
 #Now, let's evaluate the model using MAPE
 #First, let's make a prediction for the last 6 months
 outdata <- Data_ts[43:48,]
 timevals_out <- outdata$Month
-global_pred_out <- predict(lmfit,data.frame(Month =timevals_out))
-fcast <- global_pred_out + predict(armafit, n.ahead=6)$pred
+global_pred_out <- predict(lmfit,data.frame(Month =timevals_out)) + predict(armafit, n.ahead=6)$pred
+fcast <- global_pred_out 
 
 #Now, let's compare our prediction with the actual values, using MAPE
 MAPE_class_dec <- forecast::accuracy(fcast,outdata$Value)[5]
 MAPE_class_dec
-#23.66067
+#27.28549
 
 #Let's also plot the predictions along with original values, to
 #get a visual feel of the fit
-class_dec_pred <- c(ts(global_pred),ts(global_pred_out))
+class_dec_pred <- c(ts(global_pred+fitted(armafit)),ts(global_pred_out))
 plot(total_timeser, col = "black")
 lines(class_dec_pred, col = "red")
 
 # Forecasting future months
-forecast.decompose <- predict(lmfit,data.frame(Month =49:54))
+forecast.decompose <- predict(lmfit,data.frame(Month =49:54)) 
 
 ######## AUTO ARIMA ########
 #So, that was classical decomposition, now let's do an ARIMA fit
 autoarima <- auto.arima(timeser)
 autoarima
-# ARIMA(0,1,0) 
+# ARIMA(2,1,0) 
 # 
-# sigma^2 estimated as 25366:  log likelihood=-266.07
-# AIC=534.14   AICc=534.24   BIC=535.85
+# Coefficients:
+#   ar1      ar2
+# -0.7359  -0.5879
+# s.e.   0.1224   0.1185
+# 
+# sigma^2 estimated as 21185:  log likelihood=-261.9
+# AIC=529.8   AICc=530.44   BIC=534.94
 
-#Lower the AIC and BIC value, better the model
-#Log likelihood must be higher for better model
 tsdiag(autoarima)
 plot(autoarima$x, col="black")
 lines(fitted(autoarima), col="red")
@@ -623,20 +630,22 @@ lines(fitted(autoarima), col="red")
 #Again, let's check if the residual series is white noise
 resi_auto_arima <- timeser - fitted(autoarima)
 adf.test(resi_auto_arima,alternative = "stationary")
-#Dickey-Fuller = -4.3326, Lag order = 3, p-value = 0.01
+#Dickey-Fuller = -3.5969, Lag order = 3, p-value = 0.04521
 kpss.test(resi_auto_arima)
-#KPSS Level = 0.031535, Truncation lag parameter = 1, p-value = 0.1
+#KPSS Level = 0.047939, Truncation lag parameter = 1, p-value = 0.1
 
 #Also, let's evaluate the model using MAPE
 fcast_auto_arima <- predict(autoarima, n.ahead = 6)
 MAPE_auto_arima <- accuracy(fcast_auto_arima$pred,outdata$Value)[5]
 MAPE_auto_arima
-#26.24458
+#30.13319
 
 #Lastly, let's plot the predictions along with original values, to
 #get a visual feel of the fit
 auto_arima_pred <- c(fitted(autoarima),ts(fcast_auto_arima$pred))
 plot(total_timeser, col = "black")
 lines(auto_arima_pred, col = "purple")
-plot(forecast(auto_arima_pred, h=12))
+plot(forecast(auto_arima_pred, h=6))
 # 95% confidence interval is very wide, we can't be sure of the prdictions made.
+
+
