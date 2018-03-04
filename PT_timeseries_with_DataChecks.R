@@ -1,4 +1,4 @@
-#Loading necessary libraries
+#### Loading necessary libraries ####
 # Keep next line commented, for dev purpose only
 # setwd("D:/pgdds/Time Series/TimeSeries/")
 # Run these if you get package not found error
@@ -12,7 +12,7 @@ library(tseries)
 require(graphics)
 library(ggplot2)
 
-###### DATA PREPARATION #######
+########## Data Preparation #######
 
 #Reading the data from CSV file
 Data <- read.csv("Global Superstore.csv")
@@ -59,13 +59,13 @@ Data2 <- summarize(Data1, tot_Sales = sum(Sales),
                    tot_Quantity = sum(Quantity),
                    tot_Profit = sum(Profit))
 
-####Find the 2 most profitable (Higher Profit) and consistently profitable segments (Lower COV).####
+#### Find the 2 most profitable (Higher Profit) and consistently profitable segments (Lower COV).####
 Data3 <- group_by(Data2, Market, Segment)
 Data4 <- summarise(Data3, mean_Profit = mean(tot_Profit),
                    sd_Profit = sd(tot_Profit), Profit = sum(tot_Profit))
 Data4$COV <- (Data4$sd_Profit / Data4$mean_Profit) * 100
 
-####After analysing the data, we found:####
+#### After analysing the data, we found:####
 
 arrange(Data4,desc(Profit))
 #As per Max profit, top 2:
@@ -100,19 +100,15 @@ ggplot(Data3, aes(x=paste(Order.Year,Order.Month), y=tot_Profit, fill=Market))+
   geom_bar(stat = "identity")+
   bar_theme1
 
+########## Starting analysis on APAC Consumer ###########
+
 #Preparing Data for APAC Consumer Sales and Demand (Quantity)
 Data_AC <- arrange(filter(Data2, Market == 'APAC', Segment == 'Consumer'), Order.Year, Order.Month)
 Data_AC$Month <- seq.int(nrow(Data_AC))
 Data_AC_Sales <- select(ungroup(Data_AC), Month, tot_Sales)
 Data_AC_Quantity <- select(ungroup(Data_AC), Month, tot_Quantity)
 
-#Preparing Data for EU Consumer Sales and Demand (Quantity)
-Data_EC <- arrange(filter(Data2, Market == 'EU', Segment == 'Consumer'), Order.Year, Order.Month)
-Data_EC$Month <- seq.int(nrow(Data_EC))
-Data_EC_Sales <- select(ungroup(Data_EC), Month, tot_Sales)
-Data_EC_Quantity <- select(ungroup(Data_EC), Month, tot_Quantity)
-
-
+#### APAC Consumer Revenue (Sales) Modeling #######
 #For Forecasting Revenue (Sales) for APAC Consumer Segment
 Data_ts <- Data_AC_Sales
 names(Data_ts) <- c("Month", "Value")
@@ -152,7 +148,7 @@ lines(smoothedseries, col="blue", lwd=2)
 #From the plot of smoothed data, we can observe the seasonality (additive)
 # Moving Average fits better than HoltWinters, let's use that
 
-######## CLASSICAL DECOMPOSITION ########
+#### APAC Consumer Revenue (Sales) CLASSICAL DECOMPOSITION ########
 #Building a model on the smoothed time series using classical decomposition
 #First, let's convert the time series to a dataframe
 smootheddf <- as.data.frame(cbind(timevals_in, as.vector(smoothedseries)))
@@ -211,7 +207,7 @@ plot(total_timeser, col = "black")
 lines(class_dec_pred, col = "red")
 
 
-######## AUTO ARIMA ########
+#### APAC Consumer Revenue (Sales) AUTO ARIMA ########
 #So, that was classical decomposition, now let's do an ARIMA fit
 autoarima <- auto.arima(timeser)
 autoarima
@@ -261,7 +257,7 @@ forecast.decompose.APS <- predict(lmfit,data.frame(Month =49:54))
 
 
 
-####### APAC Demand (Quantity) Modeling #######
+#### APAC Consumer Demand (Quantity) Modeling #######
 #For Forecasting Demand(Quantity) for APAC Consumer Segment
 Data_ts <- Data_AC_Quantity
 names(Data_ts) <- c("Month", "Value")
@@ -303,7 +299,7 @@ lines(smoothedseries, col="blue", lwd=2)
 ##From the plot of smoothed data, we can observe the seasonality (additive)
 # Moving Average fits better than HoltWinters, let's use that
 
-######## CLASSICAL DECOMPOSITION ########
+#### APAC Consumer Demand (Quantity) CLASSICAL DECOMPOSITION ########
 #Building a model on the smoothed time series using classical decomposition
 #First, let's convert the time series to a dataframe
 smootheddf <- as.data.frame(cbind(timevals_in, as.vector(smoothedseries)))
@@ -363,7 +359,7 @@ plot(total_timeser, col = "black")
 lines(class_dec_pred, col = "red")
 
 
-######## AUTO ARIMA ########
+#### APAC Consumer Demand (Quantity) AUTO ARIMA ########
 #So, that was classical decomposition, now let's do an ARIMA fit
 autoarima <- auto.arima(timeser)
 autoarima
@@ -408,7 +404,15 @@ forecast.decompose.APQ <- predict(lmfit,data.frame(Month =49:54))
 
 
 
-########## Starting analysis on EU ###########
+########## Starting analysis on EU Consumer ###########
+
+#Preparing Data for EU Consumer Sales and Demand (Quantity)
+Data_EC <- arrange(filter(Data2, Market == 'EU', Segment == 'Consumer'), Order.Year, Order.Month)
+Data_EC$Month <- seq.int(nrow(Data_EC))
+Data_EC_Sales <- select(ungroup(Data_EC), Month, tot_Sales)
+Data_EC_Quantity <- select(ungroup(Data_EC), Month, tot_Quantity)
+
+#### EU Consumer Revenue (Sales) Modeling #######
 #For Forecasting Revenue (Sales) for EU Consumer Segment
 Data_ts <- Data_EC_Sales
 names(Data_ts) <- c("Month", "Value")
@@ -450,7 +454,7 @@ lines(smoothedseries, col="blue", lwd=2)
 ##From the plot of smoothed data, we can observe the seasonality (additive)
 # Moving average again looks better on the plot, let's got with MA
 
-######## CLASSICAL DECOMPOSITION ########
+#### EU Consumer Revenue (Sales) CLASSICAL DECOMPOSITION ########
 #Building a model on the smoothed time series using classical decomposition
 #First, let's convert the time series to a dataframe
 smootheddf <- as.data.frame(cbind(timevals_in, as.vector(smoothedseries)))
@@ -510,7 +514,7 @@ plot(total_timeser, col = "black")
 lines(class_dec_pred, col = "red")
 
 
-######## AUTO ARIMA ########
+#### EU Consumer Revenue (Sales) AUTO ARIMA ########
 #So, that was classical decomposition, now let's do an ARIMA fit
 autoarima <- auto.arima(timeser)
 autoarima
@@ -559,7 +563,7 @@ forecast.decompose.EUS <- predict(lmfit,data.frame(Month =49:54))
 # 62973.57 64037.96 65211.83 67164.44 70447.27 75361.70  
 
 
-####### EU Demand (Quantity) Modeling #######
+#### EU Consumer Demand (Quantity) Modeling #######
 #For Forecasting Demand(Quantity) for EU Consumer Segment
 Data_ts <- Data_EC_Quantity
 names(Data_ts) <- c("Month", "Value")
@@ -600,7 +604,7 @@ lines(smoothedseries, col="blue", lwd=2)
 ##From the plot of smoothed data, we can observe the seasonality (additive)
 # Using Moving Average for this one too
 
-######## CLASSICAL DECOMPOSITION ########
+#### EU Consumer Demand (Quantity) CLASSICAL DECOMPOSITION ########
 #Building a model on the smoothed time series using classical decomposition
 #First, let's convert the time series to a dataframe
 smootheddf <- as.data.frame(cbind(timevals_in, as.vector(smoothedseries)))
@@ -663,7 +667,7 @@ plot(total_timeser, col = "black")
 lines(class_dec_pred, col = "red")
 
 
-######## AUTO ARIMA ########
+#### EU Consumer Demand (Quantity) AUTO ARIMA ########
 #So, that was classical decomposition, now let's do an ARIMA fit
 autoarima <- auto.arima(timeser)
 autoarima
