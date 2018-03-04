@@ -82,7 +82,7 @@ Data_EC_Sales <- select(ungroup(Data_EC), Month, tot_Sales)
 Data_EC_Quantity <- select(ungroup(Data_EC), Month, tot_Quantity)
 
 
-#For Forecasting Sales for APAC Consumer Segment
+#For Forecasting Revenue (Sales) for APAC Consumer Segment
 Data_ts <- Data_AC_Sales
 names(Data_ts) <- c("Month", "Value")
 
@@ -129,7 +129,7 @@ lmfit <- lm(Value ~ sin(0.5*Month) + Month + cos(Month) , data=smootheddf)
 global_pred <- predict(lmfit, Month=timevals_in)
 #summary(global_pred)
 #lines(timevals_in, global_pred, col='red', lwd=2)
-lines(global_pred, col='black', lwd=2)
+lines(global_pred, col='red', lwd=2)
 
 #Now, let's look at the locally predictable series
 #We will model it as an ARMA series
@@ -144,18 +144,18 @@ armafit
 # Series: local_pred 
 # ARIMA(0,0,0) with zero mean 
 # 
-# sigma^2 estimated as 112364484:  log likelihood=-448.88
-# AIC=899.76   AICc=899.86   BIC=901.49
+# sigma^2 estimated as 107883933:  log likelihood=-448.02
+# AIC=898.05   AICc=898.15   BIC=899.78
 # 
 #
 
 #We'll check if the residual series is white noise
 resi <- local_pred-fitted(armafit)
 adf.test(resi,alternative = "stationary")
-#Dickey-Fuller = -4.4906, Lag order = 3, p-value = 0.01
+#Dickey-Fuller = -4.3741, Lag order = 3, p-value = 0.01
 #alternative hypothesis: stationary
 kpss.test(resi)
-#KPSS Level = 0.035031, Truncation lag parameter = 1, p-value = 0.1
+#KPSS Level = 0.037546, Truncation lag parameter = 1, p-value = 0.1
 
 #Now, let's evaluate the model using MAPE
 #First, let's make a prediction for the last 6 months
@@ -186,8 +186,8 @@ autoarima
 # ARIMA(0,1,1) 
 # 
 # Coefficients:
-#   ma1
-# -0.7559
+#           ma1
+#       -0.7559
 # s.e.   0.1381
 # 
 # sigma^2 estimated as 174361555:  log likelihood=-447.11
@@ -220,43 +220,11 @@ lines(auto_arima_pred, col = "purple")
 plot(forecast(auto_arima_pred, h=12))
 # 95% confidence interval is very wide, we can't be sure of the prdictions made.
 
-#For Forecasting Sales for APAC Consumer Segment
-Data_ts <- Data_AC_Sales
-names(Data_ts) <- c("Month", "Value")
-
-#Counting the number of records/months
-nrow(Data_ts)
-
-total_timeser <- ts(Data_ts$Value)
-plot(total_timeser)
-#We can clearly see from the plot that there is a global trend, no seasonality observed.
-
-indata <- Data_ts[1:42,]
-timeser <- ts(indata$Value)
-plot(timeser)
-
-#Smoothing the series - Moving Average Smoothing
-w <- 1
-smoothedseries <- stats::filter(timeser, 
-                                filter=rep(1/(2*w+1),(2*w+1)), 
-                                method='convolution', sides=2)
-#Smoothing left end of the time series
-diff <- smoothedseries[w+2] - smoothedseries[w+1]
-for (i in seq(w,1,-1)) {
-  smoothedseries[i] <- smoothedseries[i+1] - diff
-}
-#Smoothing right end of the time series
-n <- length(timeser)
-diff <- smoothedseries[n-w] - smoothedseries[n-w-1]
-for (i in seq(n-w+1, n)) {
-  smoothedseries[i] <- smoothedseries[i-1] + diff
-}
-#Plot the smoothed time series
-timevals_in <- indata$Month
-lines(smoothedseries, col="blue", lwd=2)
 
 
-#For Forecasting Sales for APAC Consumer Segment
+
+
+#For Forecasting Demand(Quantity) for APAC Consumer Segment
 Data_ts <- Data_AC_Quantity
 names(Data_ts) <- c("Month", "Value")
 
@@ -302,7 +270,7 @@ lmfit <- lm(Value ~ sin(0.5*Month) + cos(0.5*Month) + poly(Month,2), data=smooth
 global_pred <- predict(lmfit, Month=timevals_in)
 #summary(global_pred)
 #lines(timevals_in, global_pred, col='red', lwd=2)
-lines(global_pred, col='black', lwd=2)
+lines(global_pred, col='red', lwd=2)
 
 #Now, let's look at the locally predictable series
 #We will model it as an ARMA series
@@ -317,18 +285,18 @@ armafit
 # Series: local_pred 
 # ARIMA(0,0,0) with zero mean 
 # 
-# sigma^2 estimated as 112364484:  log likelihood=-448.88
-# AIC=899.76   AICc=899.86   BIC=901.49
+# sigma^2 estimated as 13571:  log likelihood=-259.42
+# AIC=520.85   AICc=520.95   BIC=522.59
 # 
 #
 
 #We'll check if the residual series is white noise
 resi <- local_pred-fitted(armafit)
 adf.test(resi,alternative = "stationary")
-#Dickey-Fuller = -4.4906, Lag order = 3, p-value = 0.01
+#Dickey-Fuller = -5.1426, Lag order = 3, p-value = 0.01
 #alternative hypothesis: stationary
 kpss.test(resi)
-#KPSS Level = 0.035031, Truncation lag parameter = 1, p-value = 0.1
+#KPSS Level = 0.038123, Truncation lag parameter = 1, p-value = 0.1
 
 #Now, let's evaluate the model using MAPE
 #First, let's make a prediction for the last 6 months
@@ -340,7 +308,7 @@ fcast <- global_pred_out
 #Now, let's compare our prediction with the actual values, using MAPE
 MAPE_class_dec <- forecast::accuracy(fcast,outdata$Value)[5]
 MAPE_class_dec
-#22.40313
+#23.66067
 
 #Let's also plot the predictions along with original values, to
 #get a visual feel of the fit
@@ -356,7 +324,7 @@ line(forecast.decompose)
 #So, that was classical decomposition, now let's do an ARIMA fit
 autoarima <- auto.arima(timeser)
 autoarima
-# ARIMA(0,1,1) 
+# ARIMA(0,1,0) 
 # 
 # sigma^2 estimated as 25366:  log likelihood=-266.07
 # AIC=534.14   AICc=534.24   BIC=535.85
@@ -370,9 +338,9 @@ lines(fitted(autoarima), col="red")
 #Again, let's check if the residual series is white noise
 resi_auto_arima <- timeser - fitted(autoarima)
 adf.test(resi_auto_arima,alternative = "stationary")
-#Dickey-Fuller = -4.2563, Lag order = 3, p-value = 0.01
+#Dickey-Fuller = -4.3326, Lag order = 3, p-value = 0.01
 kpss.test(resi_auto_arima)
-#KPSS Level = 0.042734, Truncation lag parameter = 1, p-value = 0.1
+#KPSS Level = 0.031535, Truncation lag parameter = 1, p-value = 0.1
 
 #Also, let's evaluate the model using MAPE
 fcast_auto_arima <- predict(autoarima, n.ahead = 6)
